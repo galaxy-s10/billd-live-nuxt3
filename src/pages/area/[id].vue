@@ -4,8 +4,7 @@
     class="area-wrap"
     :style="{ height: height + 'px' }"
   >
-    33
-    <!-- <LongList
+    <div
       ref="longListRef"
       class="list"
       :root-margin="{
@@ -53,20 +52,21 @@
         </div>
         <div class="desc">{{ item?.name }}</div>
       </div>
-      <div v-if="loading"></div>
-      <div
-        v-else-if="!liveRoomList.length"
-        class="null"
-      >
-        {{ t('common.nonedata') }}
-      </div>
-      <div
-        v-else-if="!hasMore"
-        class="null"
-      >
-        {{ t('common.allLoaded') }}
-      </div>
-    </LongList> -->
+    </div>
+    <div v-if="loading"></div>
+    <div
+      v-else-if="!liveRoomList.length"
+      class="null"
+    >
+      {{ t('common.nonedata') }}
+    </div>
+    <div
+      v-else-if="!hasMore"
+      class="done"
+    >
+      {{ hasMore }}
+      {{ t('common.allLoaded') }}
+    </div>
     <!-- <div
       class="paging-wrap"
       v-if="pageParams.total > pageParams.pageSize"
@@ -91,7 +91,13 @@ import { useI18n } from 'vue-i18n';
 
 import { fetchLiveRoomList } from '@/api/area';
 import LongList from '@/components/LongList/index.vue';
-import { ILiveRoom, LiveRoomIsShowEnum } from '@/types/ILiveRoom';
+import {
+  ILiveRoom,
+  LiveRoomIsShowEnum,
+  LiveRoomPullIsShouldAuthEnum,
+  LiveRoomUseCDNEnum,
+} from '@/types/ILiveRoom';
+import { LiveRoomTypeEnum } from '~/enum';
 
 const liveRoomList = ref<ILiveRoom[]>([]);
 const { t } = useI18n();
@@ -100,7 +106,7 @@ const route = useRoute();
 
 const longListRef = ref<InstanceType<typeof LongList>>();
 const topRef = ref<HTMLDivElement>();
-const height = ref(0);
+const height = ref(20);
 const loading = ref(false);
 const hasMore = ref(true);
 const pageParams = reactive({
@@ -114,7 +120,7 @@ watch(
     if (!newVal) return;
     liveRoomList.value = [];
     pageParams.nowPage = 0;
-    getData();
+    // getData();
   }
 );
 
@@ -131,17 +137,28 @@ function goRoom(item: ILiveRoom) {
 }
 
 onMounted(() => {
+  handleHeight();
+  window.addEventListener('resize', handleHeight);
+  // getData();
+});
+
+await getData();
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleHeight);
+});
+
+function handleHeight() {
   if (topRef.value) {
     height.value =
       document.documentElement.clientHeight -
       topRef.value.getBoundingClientRect().top;
   }
-  getData();
-});
+}
 
 function getListData() {
   if (!hasMore.value) return;
-  getData();
+  // getData();
 }
 
 async function getData() {
@@ -255,10 +272,11 @@ async function getData() {
         @extend %singleEllipsis;
       }
     }
-    .null {
-      width: 100%;
-      text-align: center;
-    }
+  }
+  .null,
+  .none {
+    width: 100%;
+    text-align: center;
   }
   .paging-wrap {
     display: flex;

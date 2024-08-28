@@ -134,7 +134,6 @@ export const useAppStore = defineStore('app', {
     },
     async getAreaList() {
       const res: any = await fetchAreaList();
-      console.log(res, 'ress');
       if (res.code === 200) {
         this.areaList = res.data.rows;
       }
