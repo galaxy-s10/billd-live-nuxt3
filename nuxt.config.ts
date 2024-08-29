@@ -100,13 +100,13 @@ export default defineNuxtConfig({
 
   nitro: {
     devProxy: {
-      // '/api': {
-      //   target: 'http://live-api.hsslive.cn/', // 这里是接口地址
-      //   changeOrigin: true,
-      //   // prependPath: true,
-      // },
+      '/prod-api': {
+        target: 'http://live-api.hsslive.cn', // 这里是接口地址
+        changeOrigin: true,
+        // prependPath: true,
+      },
       '/api': {
-        target: 'https://live-api.hsslive.cn/', // 这里是接口地址
+        target: 'http://localhost:4300', // 这里是接口地址
         changeOrigin: true,
         // prependPath: true,
       },

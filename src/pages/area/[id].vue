@@ -4,7 +4,7 @@
     class="area-wrap"
     :style="{ height: height + 'px' }"
   >
-    <div
+    <LongList
       ref="longListRef"
       class="list"
       :root-margin="{
@@ -16,7 +16,7 @@
       @get-list-data="getListData"
     >
       <div
-        v-for="(item, index) in liveRoomList"
+        v-for="(item, index) in data.liveRoomList"
         :key="index"
         class="item"
         @click="goRoom(item)"
@@ -52,10 +52,10 @@
         </div>
         <div class="desc">{{ item?.name }}</div>
       </div>
-    </div>
+    </LongList>
     <div v-if="loading"></div>
     <div
-      v-else-if="!liveRoomList.length"
+      v-else-if="!data.liveRoomList.length"
       class="null"
     >
       {{ t('common.nonedata') }}
@@ -67,26 +67,12 @@
       {{ hasMore }}
       {{ t('common.allLoaded') }}
     </div>
-    <!-- <div
-      class="paging-wrap"
-      v-if="pageParams.total > pageParams.pageSize"
-    >
-      <n-pagination
-        v-model:page="pageParams.nowPage"
-        v-model:page-size="pageParams.pageSize"
-        :item-count="pageParams.total"
-        show-size-picker
-        :page-sizes="[30, 50, 100, 200]"
-        @update-page="getData"
-        @update-page-size="handleUpdatePageSize"
-      />
-    </div> -->
   </div>
 </template>
 
 <script lang="ts" setup>
 import { openToTarget } from 'billd-utils';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { fetchLiveRoomList } from '@/api/area';
@@ -99,28 +85,26 @@ import {
 } from '@/types/ILiveRoom';
 import { LiveRoomTypeEnum } from '~/enum';
 
-const liveRoomList = ref<ILiveRoom[]>([]);
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 
 const longListRef = ref<InstanceType<typeof LongList>>();
 const topRef = ref<HTMLDivElement>();
-const height = ref(20);
+const height = ref(-1);
 const loading = ref(false);
 const hasMore = ref(true);
-const pageParams = reactive({
-  nowPage: 0,
-  pageSize: 50,
-});
 
 watch(
   () => route.params.id,
   (newVal) => {
     if (!newVal) return;
-    liveRoomList.value = [];
-    pageParams.nowPage = 0;
-    // getData();
+    if (!data.value) return;
+    if (data.value.liveRoomList) {
+      data.value.liveRoomList = [];
+    }
+    data.value.pageParams.nowPage = 0;
+    getData();
   }
 );
 
@@ -136,13 +120,34 @@ function goRoom(item: ILiveRoom) {
   openToTarget(url.href);
 }
 
+// await getData();
+const { data } = await useAsyncData(async () => {
+  const liveRoomList = [];
+  const pageParams = {
+    nowPage: 1,
+    pageSize: 50,
+  };
+  try {
+    const res = await fetchLiveRoomList({
+      id: Number(route.params.id),
+      live_room_is_show: LiveRoomIsShowEnum.yes,
+      nowPage: pageParams.nowPage,
+      pageSize: pageParams.pageSize,
+    });
+    if (res.code === 200) {
+      liveRoomList.push(...res.data.rows);
+    }
+    return { liveRoomList: res.data.rows, pageParams };
+  } catch (error: any) {
+    console.log(error);
+    return { errorMsg: error.message, pageParams };
+  }
+});
+
 onMounted(() => {
   handleHeight();
   window.addEventListener('resize', handleHeight);
-  // getData();
 });
-
-await getData();
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleHeight);
@@ -158,29 +163,30 @@ function handleHeight() {
 
 function getListData() {
   if (!hasMore.value) return;
-  // getData();
+  getData();
 }
 
 async function getData() {
+  if (!data.value) return;
   try {
     if (loading.value) return;
     loading.value = true;
-    pageParams.nowPage += 1;
+    data.value.pageParams.nowPage += 1;
     if (longListRef.value) {
       longListRef.value.loading = true;
     }
     const res = await fetchLiveRoomList({
       id: Number(route.params.id),
       live_room_is_show: LiveRoomIsShowEnum.yes,
-      nowPage: pageParams.nowPage,
-      pageSize: pageParams.pageSize,
+      nowPage: data.value.pageParams.nowPage,
+      pageSize: data.value.pageParams.pageSize,
     });
     if (res.code === 200) {
-      liveRoomList.value.push(...res.data.rows);
+      data.value?.liveRoomList?.push(...res.data.rows);
       hasMore.value = res.data.hasMore;
     }
   } catch (error) {
-    pageParams.nowPage -= 1;
+    data.value.pageParams.nowPage -= 1;
     console.log(error);
   }
   loading.value = false;
