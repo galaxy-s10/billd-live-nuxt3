@@ -1,18 +1,31 @@
 <template>
   <aside class="sidebar-wrap">
-    <div class="item" @click="router.push({ name: routerName.rank })">
+    <div
+      class="item"
+      @click="router.push({ name: routerName.rank })"
+    >
       <div class="ico rank"></div>
       <div class="txt">{{ t('layout.rank') }}</div>
     </div>
-    <div class="item" @click="router.push({ name: routerName.shop })">
+    <div
+      class="item"
+      @click="router.push({ name: routerName.shop })"
+    >
       <div class="ico shop"></div>
       <div class="txt">{{ t('layout.shop') }}</div>
     </div>
-    <div class="item" @click="router.push({ name: routerName.order })">
+    <div
+      class="item"
+      @click="router.push({ name: routerName.order })"
+    >
       <div class="ico data"></div>
       <div class="txt">{{ t('layout.siteOrder') }}</div>
     </div>
-    <div class="item" @click="handleJump" v-if="userStore.userInfo">
+    <div
+      v-if="userStore.userInfo"
+      class="item"
+      @click="handleJump"
+    >
       <div class="ico wallet"></div>
       <div class="txt">{{ t('layout.myWallet') }}</div>
     </div>
@@ -20,12 +33,12 @@
 </template>
 
 <script lang="ts" setup>
+import { useRouter } from 'nuxt/app';
 import { useI18n } from 'vue-i18n';
 
-import { loginTip } from '@/hooks/use-login';
 import { routerName } from '@/constant';
+import { loginTip } from '@/hooks/use-login';
 import { useUserStore } from '@/stores/user';
-import { useRoute, useRouter } from 'nuxt/app';
 
 const { t } = useI18n();
 const router = useRouter();

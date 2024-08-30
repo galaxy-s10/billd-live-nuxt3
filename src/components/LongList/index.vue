@@ -3,21 +3,32 @@
     ref="longListRef"
     class="long-list-wrap"
   >
+    <!-- <div
+      style="
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        z-index: 999;
+        color: red;
+      "
+    >
+      {{ status }}
+    </div> -->
     <slot></slot>
     <div
-      v-if="loading"
+      v-if="status === 'loading'"
       class="loading"
     >
       {{ t('common.loading') }}
     </div>
     <div
-      v-else-if="nonedata"
+      v-if="status === 'nonedata'"
       class="loading"
     >
       {{ t('common.nonedata') }}
     </div>
     <div
-      v-else-if="allLoaded"
+      v-if="status === 'allLoaded'"
       class="loading"
     >
       {{ t('common.allLoaded') }}
@@ -31,20 +42,13 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const longListRef = ref<HTMLElement>();
-const loading = ref(false);
 const bottomRef = ref<any>();
 const intersectionObserver = ref<IntersectionObserver>();
 
 const { t } = useI18n();
 
-const nonedata = ref(false);
-const allLoaded = ref(false);
-
 defineExpose({
   longListRef,
-  loading,
-  nonedata,
-  allLoaded,
 });
 
 const props = withDefaults(
@@ -55,6 +59,7 @@ const props = withDefaults(
       bottom: number;
       left: number;
     };
+    status: 'loading' | 'nonedata' | 'allLoaded' | 'normal';
   }>(),
   {
     rootMargin: () => {
@@ -77,7 +82,7 @@ function monitTouchBottom() {
     (entries) => {
       entries.forEach((item) => {
         if (item.isIntersecting) {
-          console.log('到底了');
+          // console.log('到底了');
           emits('getListData');
         } else {
           // console.log('隐藏');

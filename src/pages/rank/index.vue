@@ -253,7 +253,7 @@ function handleJump(item) {
   } else {
     router.push({
       name: routerName.user,
-      params: { id: item.id },
+      query: { id: item.id },
     });
   }
 }

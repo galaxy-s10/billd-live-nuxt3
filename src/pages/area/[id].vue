@@ -13,6 +13,7 @@
         left: 0,
         right: 0,
       }"
+      :status="status"
       @get-list-data="getListData"
     >
       <div
@@ -58,7 +59,7 @@
 
 <script lang="ts" setup>
 import { openToTarget } from 'billd-utils';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { fetchLiveRoomList } from '@/api/area';
 import LongList from '@/components/LongList/index.vue';
@@ -76,21 +77,7 @@ const route = useRoute();
 const longListRef = ref<InstanceType<typeof LongList>>();
 const topRef = ref<HTMLDivElement>();
 const height = ref(-1);
-const loading = ref(false);
-const hasMore = ref(true);
-
-watch(
-  () => route.params.id,
-  (newVal) => {
-    if (!newVal) return;
-    if (!data.value) return;
-    if (data.value.liveRoomList) {
-      data.value.liveRoomList = [];
-    }
-    data.value.pageParams.nowPage = 0;
-    getData();
-  }
-);
+const status = ref<'loading' | 'nonedata' | 'allLoaded' | 'normal'>('loading');
 
 function goRoom(item: ILiveRoom) {
   if (!item.live) {
@@ -104,14 +91,17 @@ function goRoom(item: ILiveRoom) {
   openToTarget(url.href);
 }
 
-// await getData();
 const { data } = await useAsyncData(async () => {
+  let loading = true;
+  let hasMore = true;
   const liveRoomList = [];
   const pageParams = {
     nowPage: 1,
     pageSize: 50,
   };
   try {
+    status.value = 'loading';
+    loading = true;
     const res = await fetchLiveRoomList({
       id: Number(route.params.id),
       live_room_is_show: LiveRoomIsShowEnum.yes,
@@ -119,24 +109,43 @@ const { data } = await useAsyncData(async () => {
       pageSize: pageParams.pageSize,
     });
     if (res.code === 200) {
+      hasMore = res.data.hasMore;
       liveRoomList.push(...res.data.rows);
     }
-    return { liveRoomList: res.data.rows, pageParams };
+    loading = false;
+    return { liveRoomList: res.data.rows, pageParams, hasMore, loading };
   } catch (error: any) {
+    status.value = 'normal';
+    loading = false;
     console.log(error);
-    return { errorMsg: error.message, pageParams };
+    return { errorMsg: error.message, pageParams, loading };
   }
 });
 
 onMounted(() => {
-  console.log('onMounted');
   handleHeight();
   window.addEventListener('resize', handleHeight);
+  handleStatus();
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleHeight);
 });
+
+function handleStatus() {
+  if (data.value && longListRef.value) {
+    if (data.value.loading) {
+      status.value = 'loading';
+    } else if (data.value.hasMore) {
+      status.value = 'normal';
+    } else {
+      status.value = 'allLoaded';
+    }
+    if (!data.value.liveRoomList?.length) {
+      status.value = 'nonedata';
+    }
+  }
+}
 
 function handleHeight() {
   if (topRef.value) {
@@ -147,18 +156,19 @@ function handleHeight() {
 }
 
 function getListData() {
-  if (!hasMore.value) return;
+  if (data.value?.loading) return;
+  if (!data.value?.hasMore) return;
+  data.value.pageParams.nowPage += 1;
   getData();
 }
 
 async function getData() {
   if (!data.value) return;
   try {
-    if (loading.value) return;
-    loading.value = true;
-    data.value.pageParams.nowPage += 1;
+    if (data.value.loading) return;
+    data.value.loading = true;
     if (longListRef.value) {
-      longListRef.value.loading = true;
+      status.value = 'loading';
     }
     const res = await fetchLiveRoomList({
       id: Number(route.params.id),
@@ -168,25 +178,14 @@ async function getData() {
     });
     if (res.code === 200) {
       data.value?.liveRoomList?.push(...res.data.rows);
-      hasMore.value = res.data.hasMore;
-      if (longListRef.value) {
-        if (hasMore.value) {
-          longListRef.value.nonedata = false;
-          longListRef.value.allLoaded = false;
-        } else if (!hasMore.value && !data.value?.liveRoomList?.length) {
-          longListRef.value.nonedata = true;
-          longListRef.value.allLoaded = false;
-        }
-      }
+      data.value.hasMore = res.data.hasMore;
     }
   } catch (error) {
     data.value.pageParams.nowPage -= 1;
     console.log(error);
   }
-  loading.value = false;
-  if (longListRef.value) {
-    longListRef.value.loading = false;
-  }
+  data.value.loading = false;
+  handleStatus();
 }
 </script>
 
