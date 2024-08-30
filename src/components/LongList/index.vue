@@ -10,6 +10,18 @@
     >
       {{ t('common.loading') }}
     </div>
+    <div
+      v-else-if="nonedata"
+      class="loading"
+    >
+      {{ t('common.nonedata') }}
+    </div>
+    <div
+      v-else-if="allLoaded"
+      class="loading"
+    >
+      {{ t('common.allLoaded') }}
+    </div>
     <div ref="bottomRef"></div>
   </div>
 </template>
@@ -25,9 +37,14 @@ const intersectionObserver = ref<IntersectionObserver>();
 
 const { t } = useI18n();
 
+const nonedata = ref(false);
+const allLoaded = ref(false);
+
 defineExpose({
   longListRef,
   loading,
+  nonedata,
+  allLoaded,
 });
 
 const props = withDefaults(

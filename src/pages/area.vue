@@ -26,11 +26,16 @@ const router = useRouter();
 const appStore = useAppStore();
 
 function changeArea(item: IArea) {
-  console.log(item.id, 'kk');
-  router.push({ params: { id: item.id } });
+  router.push({ name: 'area-id', params: { id: item.id } });
 }
 
 await appStore.getAreaList();
+onMounted(() => {
+  const item = appStore.areaList[0];
+  if (item) {
+    changeArea(item);
+  }
+});
 </script>
 
 <style lang="scss" scoped>

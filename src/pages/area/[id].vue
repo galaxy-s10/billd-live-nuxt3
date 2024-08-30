@@ -53,27 +53,12 @@
         <div class="desc">{{ item?.name }}</div>
       </div>
     </LongList>
-    <div v-if="loading"></div>
-    <div
-      v-else-if="!data.liveRoomList.length"
-      class="null"
-    >
-      {{ t('common.nonedata') }}
-    </div>
-    <div
-      v-else-if="!hasMore"
-      class="done"
-    >
-      {{ hasMore }}
-      {{ t('common.allLoaded') }}
-    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { openToTarget } from 'billd-utils';
 import { onMounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 import { fetchLiveRoomList } from '@/api/area';
 import LongList from '@/components/LongList/index.vue';
@@ -85,7 +70,6 @@ import {
 } from '@/types/ILiveRoom';
 import { LiveRoomTypeEnum } from '~/enum';
 
-const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 
@@ -145,6 +129,7 @@ const { data } = await useAsyncData(async () => {
 });
 
 onMounted(() => {
+  console.log('onMounted');
   handleHeight();
   window.addEventListener('resize', handleHeight);
 });
@@ -184,6 +169,15 @@ async function getData() {
     if (res.code === 200) {
       data.value?.liveRoomList?.push(...res.data.rows);
       hasMore.value = res.data.hasMore;
+      if (longListRef.value) {
+        if (hasMore.value) {
+          longListRef.value.nonedata = false;
+          longListRef.value.allLoaded = false;
+        } else if (!hasMore.value && !data.value?.liveRoomList?.length) {
+          longListRef.value.nonedata = true;
+          longListRef.value.allLoaded = false;
+        }
+      }
     }
   } catch (error) {
     data.value.pageParams.nowPage -= 1;

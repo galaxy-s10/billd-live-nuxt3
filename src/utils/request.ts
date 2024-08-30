@@ -1,7 +1,7 @@
 import axios, { Axios, AxiosRequestConfig } from 'axios';
 import { isBrowser } from 'billd-utils';
 
-import { PROD_AXIOS_BASEURL } from '@/constant';
+import { AXIOS_BASEURL, PROD_AXIOS_BASEURL } from '@/constant';
 import { useUserStore } from '@/stores/user';
 import { getToken } from '@/utils/localStorage/user';
 
@@ -145,11 +145,11 @@ switch (env) {
     break;
   case 'dev':
     if (isBrowser()) {
-      // baseURL = AXIOS_BASEURL; // 客户端运行的时候，调用本地的/api，让其代理到实际的url
-      baseURL = '/prod-api'; // 客户端运行的时候，调用本地的/api，让其代理到实际的url
+      baseURL = AXIOS_BASEURL; // 客户端运行的时候，调用本地的/api，让其代理到实际的url
+      // baseURL = '/prod-api'; // 客户端运行的时候，调用本地的/api，让其代理到实际的url
     } else {
-      baseURL = 'http://live-api.hsslive.cn'; // 服务端运行的时候直接代理到实际的url
-      // baseURL = 'http://localhost:4300'; // 服务端运行的时候直接代理到实际的url
+      baseURL = 'http://localhost:4300'; // 服务端运行的时候直接代理到实际的url
+      // baseURL = 'http://live-api.hsslive.cn'; // 服务端运行的时候直接代理到实际的url
     }
     break;
   case 'beta':
